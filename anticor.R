@@ -15,27 +15,25 @@ trans.sql <- src_sqlite("/home/geka/Documents/Anticor/edata.sqlite",
                 create = TRUE)
 
 #2)#Скільки записів у базі даних і яка загальна сума транзакцій
-tbl(trans.sql, sql("SELECT * FROM edata")) %>%
+tbl(trans.sql, sql("SELECT * FROM edata;")) %>%
   collect(n = Inf) %>%
   summarise(all.suma = sum(amount), all.count = n())
 
 #3)#Скільки транзакцій і на яку суму зробили відділи освіти та Управління освіти
-tbl(trans.sql, sql("SELECT * FROM edata")) %>%
+tbl(trans.sql, sql("SELECT * FROM edata"
+  "WHERE payer_edrpou  in ('02142282', '02124781', '02142313', '02142325', "
+  "'04544501', '02142276', '02142307',  '02142299');")) %>%
   collect(n = Inf) %>%
-  filter(payer_edrpou %in% c("02142282","02124781",
-        "02142313", "02142325", "04544501", "02142276",
-        "02142307", "02142299")) %>%
   group_by(payer_edrpou) %>%
   summarise(all.suma = sum(amount), all.count = n(),
             min.trans = min(amount), max.trans = max(amount),
             med.trans = median(amount))
 
 #4)#Скільки і кому заплатили відділи освіти та Управління освіти
-tbl(trans.sql, sql("SELECT * FROM edata")) %>%
+tbl(trans.sql, sql("SELECT * FROM edata"
+  "WHERE payer_edrpou  in ('02142282', '02124781', '02142313', '02142325', "
+  "'04544501', '02142276', '02142307',  '02142299');")) %>%
   collect(n = Inf) %>%
-  filter(payer_edrpou %in% c("02142282","02124781",
-        "02142313", "02142325", "04544501", "02142276",
-        "02142307", "02142299")) %>%
 #але при такому підході - буде проблема із ФОПами
 #краще ФОПів взагалі відфільтрувати
   # filter(nchar(recipt_edrpou) != 10) %>%
@@ -45,22 +43,20 @@ tbl(trans.sql, sql("SELECT * FROM edata")) %>%
             med.trans = median(amount)) -> tmp
 
 #5)#Як виокремити платежі, які було спрямовано на ФОПів?
-tbl(trans.sql, sql("SELECT * FROM edata")) %>%
+tbl(trans.sql, sql("SELECT * FROM edata"
+  "WHERE payer_edrpou  in ('02142282', '02124781', '02142313', '02142325', "
+  "'04544501', '02142276', '02142307',  '02142299');")) %>%
   collect(n = Inf) %>%
-  filter(payer_edrpou %in% c("02142282","02124781",
-        "02142313", "02142325", "04544501", "02142276",
-        "02142307", "02142299")) %>%
   filter(nchar(recipt_edrpou) == 10) -> tmp
 #Далі треба ці дані обробляти вручну:
 write.csv(tmp, "FOP.csv", row.names = FALSE)
 #і після обробки - завантажувати в R
 
 #6)#Як виокремити платежі на конкретну особу (ФОП)?
-tbl(trans.sql, sql("SELECT * FROM edata")) %>%
+tbl(trans.sql, sql("SELECT * FROM edata"
+  "WHERE payer_edrpou  in ('02142282', '02124781', '02142313', '02142325', "
+  "'04544501', '02142276', '02142307',  '02142299');")) %>%
   collect(n = Inf) %>%
-  filter(payer_edrpou %in% c("02142282","02124781",
-        "02142313", "02142325", "04544501", "02142276",
-        "02142307", "02142299")) %>%
   mutate(recipt_name2 = gsub("[[:cntrl:][:digit:][:punct:]]",
                             " ", recipt_name)) %>%
   mutate(words = strsplit(as.character(recipt_name2), " ")) %>%
@@ -74,11 +70,10 @@ tbl(trans.sql, sql("SELECT * FROM edata")) %>%
 write.csv(tmp, "Angeleyko.csv", row.names = FALSE)
   
 #7)#Скільки і кому освітяни заплатили за електричні плити?
-tbl(trans.sql, sql("SELECT * FROM edata")) %>%
+tbl(trans.sql, sql("SELECT * FROM edata"
+  "WHERE payer_edrpou  in ('02142282', '02124781', '02142313', '02142325', "
+  "'04544501', '02142276', '02142307',  '02142299');")) %>%
   collect(n = Inf) %>%
-  filter(payer_edrpou %in% c("02142282","02124781",
-        "02142313", "02142325", "04544501", "02142276",
-        "02142307", "02142299")) %>%
   mutate(payment_details2 = gsub("[[:cntrl:][:digit:][:punct:]]",
                             " ", payment_details)) %>%
   mutate(words = strsplit(as.character(payment_details), " ")) %>%
@@ -96,11 +91,10 @@ tbl(trans.sql, sql("SELECT * FROM edata")) %>%
 #Верхня частина скрипту - із прикладу №3
 png("Osvita_platezhi.png", width = 297, 
     height = 210, units = "mm", res = 150)
-tbl(trans.sql, sql("SELECT * FROM edata")) %>%
+tbl(trans.sql, sql("SELECT * FROM edata"
+  "WHERE payer_edrpou  in ('02142282', '02124781', '02142313', '02142325', "
+  "'04544501', '02142276', '02142307',  '02142299');")) %>%
   collect(n = Inf) %>%
-  filter(payer_edrpou %in% c("02142282","02124781",
-        "02142313", "02142325", "04544501", "02142276",
-        "02142307", "02142299")) %>%
   group_by(payer_edrpou) %>%
   summarise(all.suma = sum(amount)/1e+6, all.count = n(),
             min.trans = min(amount), max.trans = max(amount),
@@ -154,11 +148,10 @@ dev.off()
 
 
 #Додатково: Робота з календарними датами - скільки платили щомісяця?
-tbl(trans.sql, sql("SELECT * FROM edata")) %>%
+tbl(trans.sql, sql("SELECT * FROM edata"
+  "WHERE payer_edrpou  in ('02142282', '02124781', '02142313', '02142325', "
+  "'04544501', '02142276', '02142307',  '02142299');")) %>%
   collect(n = Inf) %>%
-  filter(payer_edrpou %in% c("02142282","02124781",
-        "02142313", "02142325", "04544501", "02142276",
-        "02142307", "02142299")) %>%
   mutate(date.pos = as.Date(trans_date,"%Y-%m-%d")) %>%
   filter(date.pos >= "2016-01-01", date.pos <= "2016-12-31") %>%
   mutate(month.order = factor(format(date.pos, "%B"),
